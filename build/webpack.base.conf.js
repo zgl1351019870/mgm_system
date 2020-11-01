@@ -26,6 +26,10 @@ module.exports = {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       '@': resolve('src'),
+      'components': resolve('src/components'),
+      'assets': resolve('src/assets'),
+      'network':resolve('src/network'),
+      'views':resolve('src/views')
     }
   },
   module: {
@@ -63,7 +67,11 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
-      }
+      },
+      {
+        test: /.scss$/,
+        loaders: ['style', 'css', 'sass']
+      },
     ]
   },
   node: {
