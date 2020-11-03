@@ -14,7 +14,7 @@
         </el-form-item>
         <!-- 密码 -->
         <el-form-item prop="password">
-          <el-input type="password" prefix-icon="iconfont icon-mima" v-model="loginForm.password"></el-input>
+          <el-input type="password" prefix-icon="iconfont icon-3702mima" v-model="loginForm.password"></el-input>
         </el-form-item>
 
         <!-- 按钮 -->

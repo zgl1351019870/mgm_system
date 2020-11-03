@@ -12,29 +12,39 @@
       <!-- 内容区域 -->
       <el-container>
         <!-- 侧边栏区域 -->
-        <el-aside width="200px">
+        <el-aside :width="isCollapse ? '64px' : '200px'">
+          <div class="toggle-button" @click="toggleClick">|||</div>
+          <!-- unique-opened保持一个子菜单展开 -->
+          <!-- collapse是否水平折叠菜单， collapse-transition是否开启折叠动画-->
           <el-menu
-            background-color="#545c64"
+            background-color="#333744"
             text-color="#fff"
-            active-text-color="#ffd04b"
+            active-text-color="#409eff"
+            unique-opened
+            :collapse="isCollapse"
+            :collapse-transition="false"
+            router
+            :default-active="$route.path"
           >
             <!-- 一级菜单 -->
-            <el-submenu index="1">
+            <el-submenu :index="item.id + ''" v-for="item in menuList" :key="item.id">
               <template slot="title">
-                <i class="el-icon-location"></i>
-                <span>导航一</span>
+                <i :class="iconObj[item.id]"></i>
+                <span>{{item.authName}}</span>
               </template>
               <!-- 二级菜单 -->
-              <el-menu-item index="1-4-1">
+              <el-menu-item :index="'/' + subItem.path + ''" v-for="subItem in item.children" :key="subItem.id">
                 <template slot="title">
-                  <i class="el-icon-location"></i>
-                  <span>导航一</span>
+                  <i class="el-icon-menu"></i>
+                  <span>{{subItem.authName}}</span>
                 </template>
               </el-menu-item>
             </el-submenu>
           </el-menu>
         </el-aside>
-        <el-main>Main</el-main>
+        <el-main>
+          <router-view></router-view>
+        </el-main>
       </el-container>
     </el-container>
   </div>
@@ -45,17 +55,45 @@ export default {
   props: {},
   components: {},
   data() {
-    return {};
+    return {
+      // 左侧菜单数据
+      menuList: [],
+      iconObj:{
+        '125':'iconfont icon-users',
+        '103':'iconfont icon-tijikongjian',
+        '101':'iconfont icon-shangpin',
+        '102':'iconfont icon-danju',
+        '145':'iconfont icon-baobiao'
+      },
+      isCollapse:false
+    };
   },
   computed: {},
   watch: {},
   methods: {
+    // 退出登录
     logout() {
       window.sessionStorage.clear();
       this.$router.push("/login");
     },
+    // 点击折叠左侧菜单
+    toggleClick(){
+      this.isCollapse = ! this.isCollapse;
+    },
+    // 获取左侧菜单数据
+    getMenuList() {
+      this.$api.getMenuList().then((res) => {
+        // console.log(res);
+        if (res.status !== 200) {
+          return this.$message.error("获取列表失败");
+        }
+        this.menuList = res.data.data;
+      });
+    },
   },
-  created() {},
+  created() {
+    this.getMenuList();
+  },
   mounted() {},
 };
 </script>
@@ -85,8 +123,23 @@ export default {
 }
 .el-aside {
   background-color: #333744;
+  .el-menu{
+    border-right: none;
+  }
 }
 .el-main {
   background-color: #eaedf1;
+}
+.iconfont{
+  margin-right: 10px;
+}
+.toggle-button{
+  background-color: #4a5064;
+  letter-spacing: 0.2em;
+  text-align: center;
+  color: #fff;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 24px;
 }
 </style>

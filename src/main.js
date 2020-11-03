@@ -3,7 +3,7 @@ import App from './App'
 import router from "./router/index"
 
 // 导入字体图标
-import "assets/img/font/iconfont.css"
+import "assets/img/fonts/iconfont.css"
 
 
 // element-ui的css文件需要引入的
@@ -22,6 +22,17 @@ import {
   Menu,
   Submenu,
   MenuItem,
+  Breadcrumb,
+  BreadcrumbItem,
+  Card,
+  Row,
+  Col,
+  Table,
+  TableColumn,
+  Switch,
+  Tooltip,
+  Pagination,
+  Dialog
 
 } from "element-ui"
 
@@ -40,6 +51,17 @@ Vue.use(Main)
 Vue.use(Menu)
 Vue.use(Submenu)
 Vue.use(MenuItem)
+Vue.use(Breadcrumb)
+Vue.use(BreadcrumbItem)
+Vue.use(Card)
+Vue.use(Row)
+Vue.use(Col)
+Vue.use(Table)
+Vue.use(TableColumn)
+Vue.use(Switch)
+Vue.use(Tooltip)
+Vue.use(Pagination)
+Vue.use(Dialog)
 /* eslint-disable no-new */
 Vue.prototype.$api = api;
 Vue.prototype.$message = Message;
