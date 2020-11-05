@@ -32,7 +32,8 @@ import {
   Switch,
   Tooltip,
   Pagination,
-  Dialog
+  Dialog,
+  MessageBox
 
 } from "element-ui"
 
@@ -65,6 +66,7 @@ Vue.use(Dialog)
 /* eslint-disable no-new */
 Vue.prototype.$api = api;
 Vue.prototype.$message = Message;
+Vue.prototype.$confirm = MessageBox.confirm;
 new Vue({
   el: '#app',
   router,

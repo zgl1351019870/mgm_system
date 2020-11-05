@@ -36,11 +36,54 @@ export function getUserList(arg) {
 export function changeUserState(uid,type){
   return request({
     url:"/users/"+uid +"/state/"+ type,
-    params:{
-      uid,
-      type
-    },
+    // params:{
+    //   uid,
+    //   type
+    // },
     method:'put'
+  })
+}
+
+// 新增用户
+export function addNewUser(arg){
+  return request({
+    url:"/users",
+    params:{
+      username : arg.username,
+      password : arg.password,
+      email : arg.email,
+      mobile : arg.mobile
+    },
+    method:'post'
+  })
+}
+
+// 根据id查询用户id
+export function queryUserInfo(id){
+  return request({
+    url:"/users/"+id,
+    // params:{
+    //   id
+    // }
+  })
+}
+
+// 编辑用户信息
+export function editUserInfo(arg){
+  return request({
+    url:"/users/"+arg.id,
+    params:{
+      email : arg.email,
+      mobile : arg.mobile
+    },
+    method: 'put'
+  })
+}
+
+export function deleteUserById(id){
+  return request({
+    url:"/users/" + id,
+    method:'delete'
   })
 }
 

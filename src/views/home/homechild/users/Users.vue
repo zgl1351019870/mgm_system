@@ -22,12 +22,12 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="dialogVisible = true"
+          <el-button type="primary" @click="addDialogVisible = true"
             >添加用户</el-button
           >
         </el-col>
       </el-row>
-
+      <!-- 表格 -->
       <el-table :data="userList" border stripe>
         <el-table-column type="index"></el-table-column>
         <el-table-column prop="username" label="姓名"></el-table-column>
@@ -46,27 +46,36 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="190px">
-          <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
-          <el-button
-            type="danger"
-            icon="el-icon-delete"
-            size="mini"
-          ></el-button>
-          <el-tooltip
-            effect="dark"
-            content="分配角色"
-            placement="top"
-            :enterable="false"
-          >
+          <template slot-scope="scope">
             <el-button
-              type="warning"
-              icon="el-icon-setting"
+              type="primary"
+              icon="el-icon-edit"
               size="mini"
+              @click="showEditDialog(scope.row.id)"
             ></el-button>
-          </el-tooltip>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+              @click="deleteUserById(scope.row.id)"
+            ></el-button>
+            <el-tooltip
+              effect="dark"
+              content="分配角色"
+              placement="top"
+              :enterable="false"
+            >
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+              ></el-button>
+            </el-tooltip>
+          </template>
         </el-table-column>
       </el-table>
 
+      <!-- 分页 -->
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -80,7 +89,12 @@
     </el-card>
 
     <!-- 添加用户对话框 -->
-    <el-dialog title="添加用户" :visible.sync="dialogVisible" width="50%">
+    <el-dialog
+      title="添加用户"
+      :visible.sync="addDialogVisible"
+      width="50%"
+      @close="addDialogClose"
+    >
       <el-form
         :model="addUser"
         :rules="addUserRules"
@@ -91,7 +105,7 @@
           <el-input v-model="addUser.username"></el-input>
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model="addUser.password"></el-input>
+          <el-input v-model="addUser.password" type="password"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="addUser.email"></el-input>
@@ -101,10 +115,38 @@
         </el-form-item>
       </el-form>
 
-
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addNewUser">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 编辑用户对话框 -->
+    <el-dialog
+      title="修改用户信息"
+      :visible.sync="editDialogVisible"
+      width="50%"
+      @close="editDialogClose"
+    >
+      <el-form
+        :model="editUser"
+        :rules="addUserRules"
+        ref="editUser"
+        label-width="70px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="editUser.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editUser.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="editUser.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editUserInfo">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -118,6 +160,15 @@ export default {
     Breadcrumb,
   },
   data() {
+    // 验证手机号的正则表达式
+    var checkMobile = (rule, value, callback) => {
+      const regMobile = /^(13[0-9]|14[5-9]|15[012356789]|166|17[0-8]|18[0-9]|19[8-9])[0-9]{8}$/;
+      if (regMobile.test(value)) {
+        return callback();
+      } else {
+        callback("请输入正确的手机号");
+      }
+    };
     return {
       title: ["用户管理", "用户列表"],
       queryInfo: {
@@ -130,7 +181,9 @@ export default {
       },
       userList: [],
       total: 0,
-      dialogVisible: false,
+      addDialogVisible: false,
+      editDialogVisible: false,
+      editUser: {},
       addUser: {
         username: "",
         password: "",
@@ -158,9 +211,15 @@ export default {
         ],
         email: [
           { required: true, message: "请输入邮箱", trigger: "blur" },
+          {
+            type: "email",
+            message: "请输入正确的邮箱地址",
+            trigger: ["blur", "change"],
+          },
         ],
         mobile: [
           { required: true, message: "请输入手机号", trigger: "blur" },
+          { validator: checkMobile, trigger: "blur" },
         ],
       },
     };
@@ -181,6 +240,16 @@ export default {
       this.queryInfo.pagenum = newPage;
       this.getUserList();
     },
+    // 关闭对话框，重置表单
+    addDialogClose() {
+      this.$refs.addUser.resetFields();
+    },
+    editDialogClose() {
+      this.$refs.editUser.resetFields();
+    },
+
+    // 网络请求相关
+
     // 修改用户状态
     userStateChange(userinfo) {
       // console.log(userinfo);
@@ -192,7 +261,7 @@ export default {
         this.$message.success("修改用户状态成功");
       });
     },
-    // 网络请求相关
+    // 获取用户列表
     getUserList() {
       this.$api.getUserList(this.queryInfo).then((res) => {
         if (res.status !== 200) {
@@ -200,7 +269,78 @@ export default {
         }
         this.userList = res.data.data.users;
         this.total = res.data.data.total;
+        console.log(res);
+      });
+    },
+    // 添加新用户
+    addNewUser() {
+      this.$refs.addUser.validate((val) => {
+        // val检验成功为true，反之为false
+        // 如果校验失败，则返回
+        if (val === false) return;
+
+        // 检验成功，发起网络请求添加用户
+        this.$api.addNewUser(this.addUser).then((res) => {
+          // console.log(this.addUser);
+          if (res.status !== 201) {
+            return this.$message.error(
+              "创建用户失败" + " 错误码为：" + res.status
+            );
+          } else {
+            this.$message.success("创建用户成功");
+            // 隐藏对话框
+            this.addDialogVisible = false;
+            // 重新请求数据
+            this.getUserList();
+          }
+        });
+      });
+    },
+    // 展示编辑用户信息
+    showEditDialog(id) {
+      this.editDialogVisible = true;
+      // console.log(id);
+      this.$api.queryUserInfo(id).then((res) => {
+        console.log(res);
+        this.editUser = res.data.data;
+      });
+    },
+    // 编辑用户信息
+    editUserInfo() {
+      this.$refs.editUser.validate((val) => {
+        if (val == false) return;
+        this.$api.editUserInfo(this.editUser).then((res) => {
+          console.log(res);
+          if (res.status !== 200) {
+            return this.$message.error("编辑用户信息失败");
+          } else {
+            this.$message.success("修改用户信息成功");
+            this.editDialogVisible = false;
+            this.getUserList();
+          }
+        });
+      });
+    },
+    // 删除用户
+    deleteUserById(id) {
+      this.$confirm("此操作将永久删除该用户, 是否继续?", "删除用户", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }).then(res => {
         // console.log(res);
+        this.$api.deleteUserById(id).then(res => {
+          console.log(res);
+          if(res.status !== 200){
+            return this.$message.error("删除用户失败");
+          }else{
+            this.$message.success("删除用户成功");
+            this.getUserList();
+          }
+        })
+      },err => {
+        // console.log(err);
+        this.$message.info("已取消删除");
       });
     },
   },
