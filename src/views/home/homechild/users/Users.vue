@@ -69,6 +69,7 @@
                 type="warning"
                 icon="el-icon-setting"
                 size="mini"
+                @click="setRole(scope.row)"
               ></el-button>
             </el-tooltip>
           </template>
@@ -149,6 +150,31 @@
         <el-button type="primary" @click="editUserInfo">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 分配角色的对话框 -->
+    <el-dialog title="分配角色" :visible.sync="alloRoleVisible" width="50%" @close="setDialogClose">
+      <p>当前的用户: {{ userinfo.username }}</p>
+      <p>当前的角色: {{ userinfo.role_name }}</p>
+      <p>
+        分配新角色:
+        <el-select v-model="checkedId" placeholder="请选择">
+          <el-option
+            v-for="item in rolesList"
+            :key="item.id"
+            :label="item.roleName"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
+      </p>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="alloRoleVisible = false">取 消</el-button>
+        <el-button type="primary" @click="alloUserRole"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -183,6 +209,7 @@ export default {
       total: 0,
       addDialogVisible: false,
       editDialogVisible: false,
+      alloRoleVisible: false,
       editUser: {},
       addUser: {
         username: "",
@@ -222,6 +249,12 @@ export default {
           { validator: checkMobile, trigger: "blur" },
         ],
       },
+      // 分配角色需要展示的用户信息
+      userinfo: {},
+      // 角色列表
+      rolesList: [],
+      // 选中的角色的id
+      checkedId: '',
     };
   },
   computed: {},
@@ -247,6 +280,10 @@ export default {
     editDialogClose() {
       this.$refs.editUser.resetFields();
     },
+    setDialogClose(){
+      this.checkedId = '';
+      this.userinfo = {};
+    },
 
     // 网络请求相关
 
@@ -254,7 +291,7 @@ export default {
     userStateChange(userinfo) {
       // console.log(userinfo);
       this.$api.changeUserState(userinfo.id, userinfo.mg_state).then((res) => {
-        if (res.status !== 200) {
+        if (res.data.meta.status !== 200) {
           userinfo.mg_state = !userinfo.mg_state;
           return this.$message.error("修改用户状态失败");
         }
@@ -264,7 +301,7 @@ export default {
     // 获取用户列表
     getUserList() {
       this.$api.getUserList(this.queryInfo).then((res) => {
-        if (res.status !== 200) {
+        if (res.data.meta.status !== 200) {
           return this.$message.error("获取用户列表失败");
         }
         this.userList = res.data.data.users;
@@ -281,10 +318,10 @@ export default {
 
         // 检验成功，发起网络请求添加用户
         this.$api.addNewUser(this.addUser).then((res) => {
-          // console.log(this.addUser);
-          if (res.status !== 201) {
+          console.log(res);
+          if (res.data.meta.status !== 201) {
             return this.$message.error(
-              "创建用户失败" + " 错误码为：" + res.status
+              "创建用户失败" + " 错误码为：" + res.data.meta.status
             );
           } else {
             this.$message.success("创建用户成功");
@@ -311,7 +348,7 @@ export default {
         if (val == false) return;
         this.$api.editUserInfo(this.editUser).then((res) => {
           console.log(res);
-          if (res.status !== 200) {
+          if (res.data.meta.status !== 200) {
             return this.$message.error("编辑用户信息失败");
           } else {
             this.$message.success("修改用户信息成功");
@@ -327,22 +364,51 @@ export default {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
-      }).then(res => {
-        // console.log(res);
-        this.$api.deleteUserById(id).then(res => {
-          console.log(res);
-          if(res.status !== 200){
-            return this.$message.error("删除用户失败");
-          }else{
-            this.$message.success("删除用户成功");
-            this.getUserList();
-          }
-        })
-      },err => {
-        // console.log(err);
-        this.$message.info("已取消删除");
-      });
+      }).then(
+        (res) => {
+          // console.log(res);
+          this.$api.deleteUserById(id).then((res) => {
+            console.log(res);
+            if (res.data.meta.status !== 200) {
+              return this.$message.error(res.data.meta.msg);
+            } else {
+              this.$message.success("删除用户成功");
+              this.getUserList();
+            }
+          });
+        },
+        (err) => {
+          // console.log(err);
+          this.$message.info("已取消删除");
+        }
+      );
     },
+    // 分配角色
+    setRole(userinfo) {
+      this.userinfo = userinfo;
+      // console.log(this.userinfo);
+      // 在对话框弹出来前，先获取角色列表
+      this.$api.getRolesList().then((res) => {
+        if (res.data.meta.status !== 200) {
+          return this.$message.error("获取角色列表失败");
+        }
+        this.rolesList = res.data.data;
+        // console.log(res);
+      });
+      this.alloRoleVisible = true;
+    },
+    // 点击确认为用户添加角色
+    alloUserRole(){
+      this.$api.alloUserRole(this.userinfo.id,this.checkedId).then(res => {
+        console.log(res);
+        if(res.data.meta.status !== 200){
+          return this.$message.error(res.data.meta.msg);
+        }
+        this.$message.success("用户添加角色成功");
+        this.getUserList();
+        this.alloRoleVisible = false;
+      })
+    }
   },
   created() {
     this.getUserList();

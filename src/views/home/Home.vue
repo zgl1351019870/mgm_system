@@ -84,7 +84,7 @@ export default {
     getMenuList() {
       this.$api.getMenuList().then((res) => {
         // console.log(res);
-        if (res.status !== 200) {
+        if (res.data.meta.status !== 200) {
           return this.$message.error("获取列表失败");
         }
         this.menuList = res.data.data;
@@ -98,8 +98,12 @@ export default {
 };
 </script>
 <style scoped lang="scss">
+#home{
+  height: 100%;
+}
 .el-container {
-  height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 .el-header {
   background-color: #373d41;
